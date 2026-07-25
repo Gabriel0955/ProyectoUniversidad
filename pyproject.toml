@@ -1,0 +1,10 @@
+[project]
+name = "sistema-reservas-canchas"
+version = "1.0.0"
+description = "Implementación funcional mínima para el Proyecto Integrador de Diseño de Software"
+requires-python = ">=3.10"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-v"

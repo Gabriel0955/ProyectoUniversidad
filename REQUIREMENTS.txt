@@ -1,0 +1,2 @@
+Python 3.10 o superior
+pytest 9.0.2 o compatible
