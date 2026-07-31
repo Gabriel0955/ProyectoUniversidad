@@ -26,3 +26,16 @@ class Reservation:
     duration_hours: int
     status: str
     notes: str = ""
+
+
+@dataclass(frozen=True)
+class ReservationRequest:
+    client_identification: str
+    client_name: str
+    client_email: str
+    court_id: str
+    court_name: str
+    sport: str
+    start_at: datetime
+    duration_hours: int
+    notes: str = ""

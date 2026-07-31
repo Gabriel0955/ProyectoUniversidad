@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import uuid4
 
-from .models import Client, Court, Reservation
+from .models import Client, Court, Reservation, ReservationRequest
 from .notification import NotificationService
 from .repository import InMemoryReservationRepository
 
@@ -27,27 +27,47 @@ class ReservationService:
         duration_hours: int,
         notes: str = "",
     ) -> Reservation:
-        self._validate_client_data(client_identification, client_name, client_email)
-        self._validate_court_data(court_id, court_name, sport)
-        self._validate_reservation_period(start_at, duration_hours)
-        self._validate_notes(notes)
+        request = ReservationRequest(
+            client_identification=client_identification,
+            client_name=client_name,
+            client_email=client_email,
+            court_id=court_id,
+            court_name=court_name,
+            sport=sport,
+            start_at=start_at,
+            duration_hours=duration_hours,
+            notes=notes,
+        )
+        return self.create_reservation_from_request(request)
+
+    def create_reservation_from_request(
+        self, request: ReservationRequest
+    ) -> Reservation:
+        self._validate_client_data(
+            request.client_identification, request.client_name, request.client_email
+        )
+        self._validate_court_data(request.court_id, request.court_name, request.sport)
+        self._validate_reservation_period(request.start_at, request.duration_hours)
+        self._validate_notes(request.notes)
 
         conflicts = self.repository.find_active_by_court_and_period(
-            court_id, start_at, duration_hours
+            request.court_id, request.start_at, request.duration_hours
         )
         if len(conflicts) > 0:
             raise ValueError("La cancha no está disponible en el horario solicitado")
 
-        client = Client(client_identification, client_name, client_email)
-        court = Court(court_id, court_name, sport, True)
+        client = Client(
+            request.client_identification, request.client_name, request.client_email
+        )
+        court = Court(request.court_id, request.court_name, request.sport, True)
         reservation = Reservation(
             reservation_id=str(uuid4()),
             client=client,
             court=court,
-            start_at=start_at,
-            duration_hours=duration_hours,
+            start_at=request.start_at,
+            duration_hours=request.duration_hours,
             status="CONFIRMED",
-            notes=notes,
+            notes=request.notes,
         )
         self.repository.save(reservation)
         self.notification_service.send(
@@ -55,9 +75,9 @@ class ReservationService:
             "Reserva confirmada para "
             + court.name
             + " el "
-            + start_at.strftime("%Y-%m-%d %H:%M")
+            + request.start_at.strftime("%Y-%m-%d %H:%M")
             + " por "
-            + str(duration_hours)
+            + str(request.duration_hours)
             + " hora(s).",
         )
         return reservation
