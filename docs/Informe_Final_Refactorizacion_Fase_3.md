@@ -34,12 +34,12 @@ Las pruebas existentes cubren la creacion exitosa de reservas, rechazo de confli
 
 | No. | Commit | Nivel cubierto | Refactorizacion | Olor atendido | Resultado |
 | --- | --- | --- | --- | --- | --- |
-| 1 | `aeb0ff6` | Metodos | Se extrajeron metodos privados de validacion en `ReservationService`. | Metodo largo y codigo duplicado. | `create_reservation`, `check_availability` y `cancel_reservation` quedaron mas pequenos y legibles. |
-| 2 | `a3b2574` | Datos | Se introdujo `ReservationRequest` como objeto de datos. | Lista larga de parametros. | La creacion puede recibir una estructura unica y el metodo publico anterior se conserva como fachada. |
-| 3 | `2b5c36c` | Datos | Se introdujo `TimeSlot` como objeto de valor para inicio, duracion, fin y solapamiento. | Obsesion por primitivos y calculos repetidos de fechas. | La regla de solapamiento paso del repositorio al dominio. |
-| 4 | `8afeb6d` | Clases/objetos y condicionales | Se introdujo `ReservationStatus` y `Reservation.cancel()`. | Strings magicos y manipulacion externa del estado. | La reserva controla su propia transicion a cancelada. |
-| 5 | `6f56b32` | Clases/objetos | Se extrajo `ReservationValidator`. | Clase de servicio con demasiadas responsabilidades. | Las validaciones de entrada quedaron en una clase especializada e inyectable. |
-| 6 | `37af529` | Condicionales | Se agrego `has_active_conflict()` y `Reservation.is_confirmed()`. | Condicionales compuestos y consultas poco expresivas. | El servicio expresa la regla como disponibilidad/conflicto y el repositorio encapsula el filtro. |
+| 1 | `9530008` | Metodos | Se extrajeron metodos privados de validacion en `ReservationService`. | Metodo largo y codigo duplicado. | `create_reservation`, `check_availability` y `cancel_reservation` quedaron mas pequenos y legibles. |
+| 2 | `a1fa5a6` | Datos | Se introdujo `ReservationRequest` como objeto de datos. | Lista larga de parametros. | La creacion puede recibir una estructura unica y el metodo publico anterior se conserva como fachada. |
+| 3 | `c0079fe` | Datos | Se introdujo `TimeSlot` como objeto de valor para inicio, duracion, fin y solapamiento. | Obsesion por primitivos y calculos repetidos de fechas. | La regla de solapamiento paso del repositorio al dominio. |
+| 4 | `aeaca8f` | Clases/objetos y condicionales | Se introdujo `ReservationStatus` y `Reservation.cancel()`. | Strings magicos y manipulacion externa del estado. | La reserva controla su propia transicion a cancelada. |
+| 5 | `d4adbc5` | Clases/objetos | Se extrajo `ReservationValidator`. | Clase de servicio con demasiadas responsabilidades. | Las validaciones de entrada quedaron en una clase especializada e inyectable. |
+| 6 | `1cc9d63` | Condicionales | Se agrego `has_active_conflict()` y `Reservation.is_confirmed()`. | Condicionales compuestos y consultas poco expresivas. | El servicio expresa la regla como disponibilidad/conflicto y el repositorio encapsula el filtro. |
 
 ## 4. Cobertura de los cuatro niveles solicitados
 
@@ -98,10 +98,10 @@ python -m pytest
 Salida esperada de commits:
 
 ```text
-37af529 refactor: simplify reservation availability conditionals
-6f56b32 refactor: extract reservation validator
-8afeb6d refactor: encapsulate reservation status changes
-2b5c36c refactor: introduce time slot value object
-a3b2574 refactor: introduce reservation request object
-aeb0ff6 refactor: extract reservation service validation methods
+1cc9d63 refactor: simplificar condicionales de disponibilidad
+d4adbc5 refactor: extraer validador de reservas
+aeaca8f refactor: encapsular cambios de estado de reserva
+c0079fe refactor: introducir objeto de valor para horario
+a1fa5a6 refactor: introducir objeto de solicitud de reserva
+9530008 refactor: extraer metodos de validacion del servicio de reservas
 ```
