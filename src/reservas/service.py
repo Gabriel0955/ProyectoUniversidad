@@ -1,7 +1,14 @@
 from datetime import datetime
 from uuid import uuid4
 
-from .models import Client, Court, Reservation, ReservationRequest, TimeSlot
+from .models import (
+    Client,
+    Court,
+    Reservation,
+    ReservationRequest,
+    ReservationStatus,
+    TimeSlot,
+)
 from .notification import NotificationService
 from .repository import InMemoryReservationRepository
 
@@ -65,7 +72,7 @@ class ReservationService:
             client=client,
             court=court,
             time_slot=TimeSlot(request.start_at, request.duration_hours),
-            status="CONFIRMED",
+            status=ReservationStatus.CONFIRMED,
             notes=request.notes,
         )
         self.repository.save(reservation)
@@ -103,11 +110,8 @@ class ReservationService:
         reservation = self.repository.find_by_id(reservation_id)
         if reservation is None:
             raise LookupError("La reserva no existe")
-        if reservation.status == "CANCELLED":
-            raise ValueError("La reserva ya fue cancelada")
 
-        reservation.status = "CANCELLED"
-        reservation.notes = reservation.notes + " | Cancelación: " + reason
+        reservation.cancel(reason)
         self.repository.save(reservation)
         self.notification_service.send(
             reservation.client.email,

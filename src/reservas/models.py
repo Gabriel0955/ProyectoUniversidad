@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from enum import Enum
 
 
 @dataclass
@@ -30,13 +31,18 @@ class TimeSlot:
         return self.start_at < other.end_at and self.end_at > other.start_at
 
 
+class ReservationStatus(str, Enum):
+    CONFIRMED = "CONFIRMED"
+    CANCELLED = "CANCELLED"
+
+
 @dataclass
 class Reservation:
     reservation_id: str
     client: Client
     court: Court
     time_slot: TimeSlot
-    status: str
+    status: ReservationStatus
     notes: str = ""
 
     @property
@@ -46,6 +52,12 @@ class Reservation:
     @property
     def duration_hours(self) -> int:
         return self.time_slot.duration_hours
+
+    def cancel(self, reason: str) -> None:
+        if self.status == ReservationStatus.CANCELLED:
+            raise ValueError("La reserva ya fue cancelada")
+        self.status = ReservationStatus.CANCELLED
+        self.notes = self.notes + " | Cancelación: " + reason
 
 
 @dataclass(frozen=True)

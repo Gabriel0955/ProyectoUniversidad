@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from .models import Reservation, TimeSlot
+from .models import Reservation, ReservationStatus, TimeSlot
 
 
 class InMemoryReservationRepository:
@@ -32,7 +32,7 @@ class InMemoryReservationRepository:
         for reservation in self._reservations:
             if (
                 reservation.court.court_id == court_id
-                and reservation.status == "CONFIRMED"
+                and reservation.status == ReservationStatus.CONFIRMED
                 and reservation.time_slot.overlaps(requested_slot)
             ):
                 matches.append(reservation)
