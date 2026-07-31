@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import uuid4
 
-from .models import Client, Court, Reservation, ReservationRequest
+from .models import Client, Court, Reservation, ReservationRequest, TimeSlot
 from .notification import NotificationService
 from .repository import InMemoryReservationRepository
 
@@ -64,8 +64,7 @@ class ReservationService:
             reservation_id=str(uuid4()),
             client=client,
             court=court,
-            start_at=request.start_at,
-            duration_hours=request.duration_hours,
+            time_slot=TimeSlot(request.start_at, request.duration_hours),
             status="CONFIRMED",
             notes=request.notes,
         )

@@ -1,7 +1,7 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Optional
 
-from .models import Reservation
+from .models import Reservation, TimeSlot
 
 
 class InMemoryReservationRepository:
@@ -27,17 +27,13 @@ class InMemoryReservationRepository:
     def find_active_by_court_and_period(
         self, court_id: str, start_at: datetime, duration_hours: int
     ) -> list[Reservation]:
-        requested_end = start_at + timedelta(hours=duration_hours)
+        requested_slot = TimeSlot(start_at, duration_hours)
         matches = []
         for reservation in self._reservations:
-            reservation_end = reservation.start_at + timedelta(
-                hours=reservation.duration_hours
-            )
-            overlaps = start_at < reservation_end and requested_end > reservation.start_at
             if (
                 reservation.court.court_id == court_id
                 and reservation.status == "CONFIRMED"
-                and overlaps
+                and reservation.time_slot.overlaps(requested_slot)
             ):
                 matches.append(reservation)
         return matches
