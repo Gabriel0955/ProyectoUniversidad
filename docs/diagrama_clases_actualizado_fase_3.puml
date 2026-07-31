@@ -1,0 +1,119 @@
+@startuml
+title Sistema de Reservas de Canchas Deportivas - Diagrama de clases actualizado
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+
+package "reservas.models" {
+  class Client {
+    +identification: str
+    +name: str
+    +email: str
+  }
+
+  class Court {
+    +court_id: str
+    +name: str
+    +sport: str
+    +active: bool
+  }
+
+  class TimeSlot {
+    +start_at: datetime
+    +duration_hours: int
+    +end_at: datetime
+    +overlaps(other: TimeSlot): bool
+  }
+
+  enum ReservationStatus {
+    CONFIRMED
+    CANCELLED
+  }
+
+  class Reservation {
+    +reservation_id: str
+    +client: Client
+    +court: Court
+    +time_slot: TimeSlot
+    +status: ReservationStatus
+    +notes: str
+    +start_at: datetime
+    +duration_hours: int
+    +is_confirmed(): bool
+    +cancel(reason: str): void
+  }
+
+  class ReservationRequest {
+    +client_identification: str
+    +client_name: str
+    +client_email: str
+    +court_id: str
+    +court_name: str
+    +sport: str
+    +start_at: datetime
+    +duration_hours: int
+    +notes: str
+  }
+}
+
+package "reservas.service" {
+  class ReservationService {
+    +create_reservation(...): Reservation
+    +create_reservation_from_request(request: ReservationRequest): Reservation
+    +check_availability(court_id: str, start_at: datetime, duration_hours: int): bool
+    +cancel_reservation(reservation_id: str, reason: str): Reservation
+  }
+}
+
+package "reservas.repository" {
+  class InMemoryReservationRepository {
+    -_reservations: list[Reservation]
+    +save(reservation: Reservation): Reservation
+    +find_by_id(reservation_id: str): Reservation
+    +find_all(): list[Reservation]
+    +find_active_by_court_and_period(court_id: str, start_at: datetime, duration_hours: int): list[Reservation]
+    +has_active_conflict(court_id: str, start_at: datetime, duration_hours: int): bool
+  }
+}
+
+package "reservas.notification" {
+  class NotificationService {
+    +sent_messages: list[str]
+    +send(destination: str, message: str): void
+  }
+}
+
+package "reservas.validation" {
+  class ReservationValidator {
+    +validate_client_data(identification: str, name: str, email: str): void
+    +validate_court_data(court_id: str, name: str, sport: str): void
+    +validate_reservation_period(start_at: datetime, duration_hours: int, require_future: bool): void
+    +validate_notes(notes: str): void
+    +validate_required_text(value: str, message: str): void
+    +validate_text_length(value: str, limit: int, message: str): void
+  }
+}
+
+Client "1" <-- "0..*" Reservation
+Court "1" <-- "0..*" Reservation
+Reservation *-- "1" TimeSlot
+Reservation --> ReservationStatus
+ReservationService --> InMemoryReservationRepository
+ReservationService --> NotificationService
+ReservationService --> ReservationValidator
+ReservationService ..> ReservationRequest
+ReservationService ..> Reservation
+InMemoryReservationRepository o-- "0..*" Reservation
+
+note right of TimeSlot
+  Nuevo objeto de valor:
+  concentra inicio, duracion,
+  fin y solapamiento.
+end note
+
+note bottom of Reservation
+  La reserva encapsula
+  la regla de cancelacion.
+end note
+@enduml

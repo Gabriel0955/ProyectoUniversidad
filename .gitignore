@@ -5,6 +5,7 @@ __pycache__/
 venv/
 coverage.xml
 htmlcov/
+tmp/
 .idea/
 .vscode/
 .DS_Store
