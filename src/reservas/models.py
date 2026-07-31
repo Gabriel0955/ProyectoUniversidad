@@ -53,6 +53,9 @@ class Reservation:
     def duration_hours(self) -> int:
         return self.time_slot.duration_hours
 
+    def is_confirmed(self) -> bool:
+        return self.status == ReservationStatus.CONFIRMED
+
     def cancel(self, reason: str) -> None:
         if self.status == ReservationStatus.CANCELLED:
             raise ValueError("La reserva ya fue cancelada")

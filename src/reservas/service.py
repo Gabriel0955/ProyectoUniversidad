@@ -64,10 +64,10 @@ class ReservationService:
         )
         self.validator.validate_notes(request.notes)
 
-        conflicts = self.repository.find_active_by_court_and_period(
+        has_conflict = self.repository.has_active_conflict(
             request.court_id, request.start_at, request.duration_hours
         )
-        if len(conflicts) > 0:
+        if has_conflict:
             raise ValueError("La cancha no está disponible en el horario solicitado")
 
         client = Client(
@@ -104,10 +104,10 @@ class ReservationService:
         self.validator.validate_reservation_period(
             start_at, duration_hours, require_future=False
         )
-        conflicts = self.repository.find_active_by_court_and_period(
+        has_conflict = self.repository.has_active_conflict(
             court_id, start_at, duration_hours
         )
-        return len(conflicts) == 0
+        return not has_conflict
 
     def cancel_reservation(self, reservation_id: str, reason: str) -> Reservation:
         self.validator.validate_required_text(

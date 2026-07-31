@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from .models import Reservation, ReservationStatus, TimeSlot
+from .models import Reservation, TimeSlot
 
 
 class InMemoryReservationRepository:
@@ -28,12 +28,24 @@ class InMemoryReservationRepository:
         self, court_id: str, start_at: datetime, duration_hours: int
     ) -> list[Reservation]:
         requested_slot = TimeSlot(start_at, duration_hours)
-        matches = []
-        for reservation in self._reservations:
-            if (
-                reservation.court.court_id == court_id
-                and reservation.status == ReservationStatus.CONFIRMED
-                and reservation.time_slot.overlaps(requested_slot)
-            ):
-                matches.append(reservation)
-        return matches
+        return [
+            reservation
+            for reservation in self._reservations
+            if self._matches_active_period(reservation, court_id, requested_slot)
+        ]
+
+    def has_active_conflict(
+        self, court_id: str, start_at: datetime, duration_hours: int
+    ) -> bool:
+        return bool(
+            self.find_active_by_court_and_period(court_id, start_at, duration_hours)
+        )
+
+    def _matches_active_period(
+        self, reservation: Reservation, court_id: str, requested_slot: TimeSlot
+    ) -> bool:
+        return (
+            reservation.court.court_id == court_id
+            and reservation.is_confirmed()
+            and reservation.time_slot.overlaps(requested_slot)
+        )
