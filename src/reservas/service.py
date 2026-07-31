@@ -27,29 +27,10 @@ class ReservationService:
         duration_hours: int,
         notes: str = "",
     ) -> Reservation:
-        # Versión base intencionalmente mejorable para la fase de diagnóstico.
-        if client_identification is None or client_identification.strip() == "":
-            raise ValueError("La identificación del cliente es obligatoria")
-        if client_name is None or client_name.strip() == "":
-            raise ValueError("El nombre del cliente es obligatorio")
-        if client_email is None or client_email.strip() == "":
-            raise ValueError("El correo del cliente es obligatorio")
-        if "@" not in client_email or "." not in client_email:
-            raise ValueError("El correo del cliente no es válido")
-        if court_id is None or court_id.strip() == "":
-            raise ValueError("El identificador de la cancha es obligatorio")
-        if court_name is None or court_name.strip() == "":
-            raise ValueError("El nombre de la cancha es obligatorio")
-        if sport is None or sport.strip() == "":
-            raise ValueError("El deporte es obligatorio")
-        if start_at is None:
-            raise ValueError("La fecha y hora son obligatorias")
-        if start_at <= datetime.now():
-            raise ValueError("La reserva debe programarse para una fecha futura")
-        if duration_hours < 1 or duration_hours > 4:
-            raise ValueError("La duración debe estar entre 1 y 4 horas")
-        if len(notes) > 250:
-            raise ValueError("Las observaciones no pueden superar 250 caracteres")
+        self._validate_client_data(client_identification, client_name, client_email)
+        self._validate_court_data(court_id, court_name, sport)
+        self._validate_reservation_period(start_at, duration_hours)
+        self._validate_notes(notes)
 
         conflicts = self.repository.find_active_by_court_and_period(
             court_id, start_at, duration_hours
@@ -84,24 +65,21 @@ class ReservationService:
     def check_availability(
         self, court_id: str, start_at: datetime, duration_hours: int
     ) -> bool:
-        if court_id is None or court_id.strip() == "":
-            raise ValueError("El identificador de la cancha es obligatorio")
-        if start_at is None:
-            raise ValueError("La fecha y hora son obligatorias")
-        if duration_hours < 1 or duration_hours > 4:
-            raise ValueError("La duración debe estar entre 1 y 4 horas")
+        self._validate_required_text(
+            court_id, "El identificador de la cancha es obligatorio"
+        )
+        self._validate_reservation_period(start_at, duration_hours, require_future=False)
         conflicts = self.repository.find_active_by_court_and_period(
             court_id, start_at, duration_hours
         )
         return len(conflicts) == 0
 
     def cancel_reservation(self, reservation_id: str, reason: str) -> Reservation:
-        if reservation_id is None or reservation_id.strip() == "":
-            raise ValueError("El identificador de la reserva es obligatorio")
-        if reason is None or reason.strip() == "":
-            raise ValueError("El motivo de cancelación es obligatorio")
-        if len(reason) > 250:
-            raise ValueError("El motivo no puede superar 250 caracteres")
+        self._validate_required_text(
+            reservation_id, "El identificador de la reserva es obligatorio"
+        )
+        self._validate_required_text(reason, "El motivo de cancelación es obligatorio")
+        self._validate_text_length(reason, 250, "El motivo no puede superar 250 caracteres")
 
         reservation = self.repository.find_by_id(reservation_id)
         if reservation is None:
@@ -117,3 +95,44 @@ class ReservationService:
             "La reserva " + reservation.reservation_id + " fue cancelada.",
         )
         return reservation
+
+    def _validate_client_data(
+        self, identification: str, name: str, email: str
+    ) -> None:
+        self._validate_required_text(
+            identification, "La identificación del cliente es obligatoria"
+        )
+        self._validate_required_text(name, "El nombre del cliente es obligatorio")
+        self._validate_required_text(email, "El correo del cliente es obligatorio")
+        if "@" not in email or "." not in email:
+            raise ValueError("El correo del cliente no es válido")
+
+    def _validate_court_data(self, court_id: str, name: str, sport: str) -> None:
+        self._validate_required_text(
+            court_id, "El identificador de la cancha es obligatorio"
+        )
+        self._validate_required_text(name, "El nombre de la cancha es obligatorio")
+        self._validate_required_text(sport, "El deporte es obligatorio")
+
+    def _validate_reservation_period(
+        self, start_at: datetime, duration_hours: int, require_future: bool = True
+    ) -> None:
+        if start_at is None:
+            raise ValueError("La fecha y hora son obligatorias")
+        if require_future and start_at <= datetime.now():
+            raise ValueError("La reserva debe programarse para una fecha futura")
+        if duration_hours < 1 or duration_hours > 4:
+            raise ValueError("La duración debe estar entre 1 y 4 horas")
+
+    def _validate_notes(self, notes: str) -> None:
+        self._validate_text_length(
+            notes, 250, "Las observaciones no pueden superar 250 caracteres"
+        )
+
+    def _validate_required_text(self, value: str, message: str) -> None:
+        if value is None or value.strip() == "":
+            raise ValueError(message)
+
+    def _validate_text_length(self, value: str, limit: int, message: str) -> None:
+        if len(value) > limit:
+            raise ValueError(message)
